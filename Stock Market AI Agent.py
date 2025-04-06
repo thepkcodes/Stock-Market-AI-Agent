@@ -22,7 +22,7 @@ class StockMarketAIAgent:
         self.risk_profiles = {
             'conservative': {'volatility_weight': 0.8, 'momentum_weight': 0.2},
             'moderate': {'volatility_weight':0.5, 'momentum_weight': 0.5},
-            'aggresive': {'volatility_weight': 0.2, 'momentum_weight': 0.8}
+            'aggressive': {'volatility_weight': 0.2, 'momentum_weight': 0.8}
         }
     
     def get_realtime_data(self, ticker_list):
@@ -33,7 +33,7 @@ class StockMarketAIAgent:
         for ticker in ticker_list:
             try:
                 stock = yf.Ticker(ticker)
-                current_data = stock.history(period = 'id', interval = '1m').iloc[-1]
+                current_data = stock.history(period = '1d', interval = '1m').iloc[-1]
 
                 hist_data = stock.history(period = '60d')
 
@@ -55,8 +55,8 @@ class StockMarketAIAgent:
                     'macd': latest['MACD'],
                     'signal': latest['Signal'],
                     'volatility': latest['Volatility'],
-                    'price_to_sma20': current_data['Close'] / latest['SMA_20'] if not np.isnam(latest['SMA_20']) else 1,
-                    'price_to_sma50': current_data['Close'] / latest['SMA_50'] if not np.isnam(latest['SMA_50']) else 1,
+                    'price_to_sma20': current_data['Close'] / latest['SMA_20'] if not np.isnan(latest['SMA_20']) else 1,
+                    'price_to_sma50': current_data['Close'] / latest['SMA_50'] if not np.isnan(latest['SMA_50']) else 1,
                     'hist_data': hist_data
                 }
 
@@ -122,7 +122,7 @@ class StockMarketAIAgent:
         results = {}
         profile = self.risk_profiles.get(risk_profile, self.risk_profiles['moderate'])
 
-        for ticker, data in self.makret_data.items():
+        for ticker, data in self.market_data.items():
             signals = {
                 'price_above_sma20': data['current_price'] > data['sma_20'] if not np.isnan(data['sma_20']) else False,
                 'price_above_sma50': data['current_price'] > data['sma_50'] if not np.isnan(data['sma_50']) else False,
@@ -212,7 +212,7 @@ class StockMarketAIAgent:
         else:
             analysis.append("Overall analysis suggests a HOLD position, monitoring for clearer signals before taking action.")
 
-        return " ".json(analysis)
+        return " ".join(analysis)
     
     def visualize_stock(self, ticker):
         if ticker not in self.market_data:
@@ -221,19 +221,19 @@ class StockMarketAIAgent:
         data = self.market_data[ticker]['hist_data']
 
         # Create a figure with subplots
-        fig, (ax1, ax2, ax3) = plt.subplot(3, 1, figsize=(12, 10), gridspec_kw = {'height_ratios': [3, 1, 1]})
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10))
 
         # Plot price and moving averages
         ax1.plot(data.index, data['Close'], label = 'Close Price', linewidth = 2)
         ax1.plot(data.index, data['SMA_20'], label  = '20-day SMA', linestyle = '--')
         ax1.plot(data.index, data['SMA_50'], label = '50-day SMA', linestyle = '-.')
         ax1.set_title(f"{self.market_data[ticker]['company_name']} ({ticker}) Price and Indicators")
-        ax1.st_ylabel('Price ($)')
+        ax1.set_ylabel('Price ($)')
         ax1.grid(True)
-        ax1.legen()
+        ax1.legend()
 
         # Plot volume
-        ax2.bar(data.index, data['Volume'], color = 'gray', aplha = 0.5)
+        ax2.bar(data.index, data['Volume'], color = 'gray', alpha = 0.5)
         ax2.set_ylabel('Volume')
         ax2.grid(True)
 
@@ -278,7 +278,7 @@ class StockMarketAIAgent:
         top_performers = [{"ticker": ticker, "company": data['company'], "score": data['final_score']}
                         for ticker, data in stocks_by_score[:3]]
         under_performers = [{"ticker": ticker, "company": data['company'], "score": data['final_score']}
-                        for ticker, data in stocks_by_score[-3:1]]
+                        for ticker, data in stocks_by_score[-3:]]
         summary = {
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "analyzed_stocks": total_count,
@@ -400,68 +400,68 @@ class StockMarketAIAgent:
             "market_context": market_summary.get("market_bias", "Unknown") 
         }
     
-    def run_example():
-        agent = StockMarketAIAgent(api_key = 'PEESFA0M83GR5LC7')
+def run_example(self):
+    agent = StockMarketAIAgent(api_key = 'PEESFA0M83GR5LC7')
         
-        stocks = ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NFLX', 'ORCL', 'NVDA', 'IBM']
+    stocks = ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NFLX', 'ORCL', 'NVDA', 'IBM']
 
-        print("1. Fetching real-time market data...")
-        agent.get_realtime_data(stocks)
+    print("1. Fetching real-time market data...")
+    agent.get_realtime_data(stocks)
 
-        print("\n2. Analyzing stocks...")
-        analysis = agent.analyze_stocks(risk_profile='moderate')
+    print("\n2. Analyzing stocks...")
+    analysis = agent.analyze_stocks(risk_profile='moderate')
 
-        print("\nStock Analysis Results:")
-        for ticker, data in analysis.items():
-            print(f"\n{data['company']} ({ticker}):")
-            print(f" Current Price: ${data['price']: 2f} ({data['day_change']})")
-            print(f" Recommendation: {data['recommendation']}")
-            print(f" Analysis: {data['analysis']}")
+    print("\nStock Analysis Results:")
+    for ticker, data in analysis.items():
+        print(f"\n{data['company']} ({ticker}):")
+        print(f" Current Price: ${data['price']: 2f} ({data['day_change']})")
+        print(f" Recommendation: {data['recommendation']}")
+        print(f" Analysis: {data['analysis']}")
 
-        print("\n3. Generating market summary...")
-        summary = agent.get_market_summary()
-        print(f"\nMarket Bias: {summary['market_bias']}")
-        print(f"BUY Recommendations: {summary['buy_percentage']:.1f}%")
-        print(f"Sell Recommendations: {summary['sell_percentage']:.1f}%")
+    print("\n3. Generating market summary...")
+    summary = agent.get_market_summary()
+    print(f"\nMarket Bias: {summary['market_bias']}")
+    print(f"BUY Recommendations: {summary['buy_percentage']:.1f}%")
+    print(f"Sell Recommendations: {summary['sell_percentage']:.1f}%")
 
-        print("\nTop Performers:")
-        for stock in summary['top_performers']:
-            print(f" {stock['company']} ({stock['ticker']}): Score {stock['score']:.2f}")
+    print("\nTop Performers:")
+    for stock in summary['top_performers']:
+        print(f" {stock['company']} ({stock['ticker']}): Score {stock['score']:.2f}")
 
-        print("\n4. Suggesting portfolio allocation for $10,000...")
-        portfolio = agent.suggest_portfolio(10000, risk_profile='moderate')
+    print("\n4. Suggesting portfolio allocation for $10,000...")
+    portfolio = agent.suggest_portfolio(10000, risk_profile='moderate')
 
-        if 'allocation' in portfolio:
-            print("\nSuggested Portfolio:")
-            for item in portfolio['allocation']:
-                print(f" {item['company']} ({item['ticker']}): ${item['amount']:.2f} ({item['allocation_percentage']:.1f}%)")
+    if 'allocation' in portfolio:
+        print("\nSuggested Portfolio:")
+        for item in portfolio['allocation']:
+            print(f" {item['company']} ({item['ticker']}): ${item['amount']:.2f} ({item['allocation_percentage']:.1f}%)")
 
 
-        sample_portfolio = {
-            "holdings": [
-                {"ticker": "AAPL", "shares": 10, "cost_basis": 150.0},
-                {"ticker": "MSFT", "shares": 5, "cost_basis": 250.0},
-                {"ticker": "AMZN", "shares": 2, "cost_basis": 3000.0}
-            ]
-        }
+    sample_portfolio = {
+        "holdings": [
+            {"ticker": "AAPL", "shares": 10, "cost_basis": 150.0},
+            {"ticker": "MSFT", "shares": 5, "cost_basis": 250.0},
+            {"ticker": "AMZN", "shares": 2, "cost_basis": 3000.0}
+        ]
+    }
 
-        print("\n5. Monitoring existing portfolio...")
-        portfolio_status = agent.monitor_portfolio(sample_portfolio)
+    print("\n5. Monitoring existing portfolio...")
+    portfolio_status = agent.monitor_portfolio(sample_portfolio)
 
-        print("\nPortfolio Performance:")
-        print(f"Total Value: ${portfolio_status['portfolio_value']:.2f}")
-        print(f"Total Cost: ${portfolio_status['total_cost']:.2f}")
-        print(f"Overall Change: ${portfolio_status['overall_change']:.2f} ({portfolio_status['overall_change_pct']:.2f}%)")
+    print("\nPortfolio Performance:")
+    print(f"Total Value: ${portfolio_status['portfolio_value']:.2f}")
+    print(f"Total Cost: ${portfolio_status['total_cost']:.2f}")
+    print(f"Overall Change: ${portfolio_status['overall_change']:.2f} ({portfolio_status['overall_change_pct']:.2f}%)")
 
-        print("\nHoldings Status:")
-        for holding in portfolio_status['holdings']:
-            print(f" {holding['company']} ({holding['ticker']}): {holding['shares']} shares")
-            print(f" Current Value: ${holding['current_value']:.2f} (${holding['current_price']:.2f} per share)")
-            print(f" Position Change: ${holding['position_change']:.2f} ({holding['current_price']:.2f} per share)")
-            print(f" Recommendation: {holding['current_recommendation']}")
+    print("\nHoldings Status:")
+    for holding in portfolio_status['holdings']:
+        print(f" {holding['company']} ({holding['ticker']}): {holding['shares']} shares")
+        print(f" Current Value: ${holding['current_value']:.2f} (${holding['current_price']:.2f} per share)")
+        print(f" Position Change: ${holding['position_change']:.2f} ({holding['current_price']:.2f} per share)")
+        print(f" Recommendation: {holding['current_recommendation']}")
 
-    if __name__ == "__main__":
-        run_example()
+if __name__ == "__main__":
+    run_example()
 
                 
 
