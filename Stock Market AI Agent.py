@@ -1,11 +1,13 @@
+import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
 import requests
 import json
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.express as px
 from datetime import datetime, timedelta
 import time
 import warnings
@@ -27,7 +29,6 @@ class StockMarketAIAgent:
     
     def get_realtime_data(self, ticker_list):
 
-        print(f"Fetching real-time data for {ticker_list}...")
         data = {}
 
         for ticker in ticker_list:
@@ -70,7 +71,7 @@ class StockMarketAIAgent:
                     data[ticker]['sentiment'] = self._get_news_sentiment(ticker)
 
             except Exception as e:
-                print(f"Error fetching data for {ticker}: {str(e)}")
+                st.error(f"Error fetching data for {ticker}: {str(e)}")
                 continue
 
         self.market_data = data
@@ -112,7 +113,7 @@ class StockMarketAIAgent:
             return 0
 
         except Exception as e:
-            print(f"Error fetching sentiment data: {str(e)}")
+            st.error(f"Error fetching sentiment data: {str(e)}")
             return 0
         
     def analyze_stocks(self, risk_profile = 'moderate'):
@@ -343,6 +344,30 @@ class StockMarketAIAgent:
 
         return portfolio
     
+st.set_page_config(page_title = "Stock Market AI Agent", page_icon = "📈", layout = 'wide')
+
+if 'agent' not in st.session_state:
+    st.session_state.agent = StockMarketAIAgent()
+if 'analyzed_stocks' not in st.session_state = []
+    st.session_state.analyzed_stocks = []
+if 'analysis_results' not in st.session_state:
+    st.session_state.analysis_results = {}
+if 'market_summary' not in st.session_state:
+    st.session_state.market_summary = {}
+if 'portfolio_suggestion' not in st.session_state:
+    st.session_state.portfolio_suggestion = {}
+
+st.title("📈 Stock Market AI Agent")
+st.markdown("""
+This application uses AI to analyze real-time stock data and provide investment recommendatios.
+Add stocks to your watchlist, select your risk profile, and get AI-powered insights to make better investment decisions.
+""")
+
+st.sidebar.header("Settings")
+
+api_key
+
+    """
     def monitor_portfolio(self, portfolio):
         if not portfolio or 'holdings' not in portfolio:
             return {"error": "Invalid portfolio format. Please provide a portfolio with holdings."}
@@ -464,6 +489,4 @@ def run_example(self):
 if __name__ == "__main__":
     run_example('self')
 
-                
-
-
+"""
