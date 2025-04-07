@@ -365,9 +365,162 @@ Add stocks to your watchlist, select your risk profile, and get AI-powered insig
 
 st.sidebar.header("Settings")
 
-api_key
+api_key = st.secrets["api_keys"]["ALPHA_VANTAGE_API_KEY"]
+if 'agent' not in st.session_state:
+    st.session_state.agent = StockMarketAIAgent(api_key = api_key)
 
-    """
+risk_profile = st.sidebar.selectbox(
+    "Risk Profile",
+    ["Conservative", "moderate", "aggressive"],
+)
+
+st.sidebar.subheader("Your Watchlist")
+if st.session_state.analyzed_stocks:
+    for i, stock in enumerate(st.session_state.analyzed_stocks):
+        cols = st.sidebar.columns([4, 1])
+        cols[0].write(stock)
+        if cols[1].button("🗑️", key = f"delete_{i}"):
+            st.session_state.analyzed_stocks.remove(stock)
+            st.experimental_rerun()
+else:
+    st.sidebar.write("No stocks in watchlist yet.")
+
+analyze_button = st.sidebar.button("Analyze Watchlist")
+
+st.sidebar.subheader("Portfolio Settings")
+budget = st.sidebar.number_input("Investment Budget ($)", min_value = 1000, value = 10000, step = 1000)
+max_stocks = st.sidebar.slider("Maximum Stocks in Portfolio", min_value = 1, max_value = 10, value= 5)
+
+if analyze_button and st.session_state.analyzed_stocks:
+    with st.spinner("Fetching real-time data and analyzing..."):
+        st.session_state.agent.get_realtime_data(st.session_state.analyzed_stocks)
+
+        st.session_state.analysis_results = st.session_state.agent.analyze_stocks(risk_profile)
+
+        st.session_state.market_summary = st.session_state.agent.get_market_summary()
+
+        st.session_state.portfolio_suggestion = st.session_state.agent.suggest_portfolio(
+            budget, risk_profile, max_stocks
+        )
+
+if st.session_state.market_summary and 'market_bias' in st.session_state.market_summary:
+    st.header("Market Summary")
+    summary = st.session_state.market_summary
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Market Bias", summary['market_bias'])
+    col2.metric("Stocks Analyzed", summary['analyzed_stocks'])
+    col3.metric("BUY %", f"{summary['buy_percentage']:.1f}%")
+    col4.metric("SELL %", f"{summary['sell_percentage']:.1f}%")
+
+    if summary['analyzed_stocks'] > 0:
+        fig = go.Figure()
+        fig.add_trace(go.Pie(
+            labels = ['BUY', 'HOLD', 'SELL'],
+            values = [summary['buy_percentage'], summary['hold_percentage'], summary['sell_percentage']],
+            hole = .4,
+            marker_colors = ['#3cb371', '#add8e6', '#ff7f7f']
+        ))
+        fig.update_layout(title_text = "Recommendation Distribution")
+        st.plotly_chart(fig, use_container_width = True)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Top Performers")
+        if summary['top_performers']:
+            top_df = pd.DataFrame(summary['top_performers'])
+            top_df['score'] = top_df['score'].round(2)
+            st.dataframe(top_df)
+
+    with col2:
+        st.subheader("Under Performers")
+        if summary['under_performers']:
+            under_df = pd.DataFrame(summary['under_performers'])
+            under_df['score'] = under_df['score'].round(2)
+            st.dataframe(under_df)
+
+if st.session_state.analysis_results:
+    st.header("Stock Analysis Results")
+
+    results_list = []
+    for ticker, data in st.session_state.analysis_results.items():
+        results_list.append({
+            'Ticker': ticker,
+            'Company': data['company'],
+            "Price": f"${data['price']:.2f}",
+            'Day Change': data['day_change'],
+            'Technical Score': round(data['technical_score'], 2),
+            'Momentum Score': round(data['momentum_score'], 2),
+            'Final Score': round(data['final_score'], 2),
+            'Recommendation': data['recommendation']
+        })
+
+    results_df = pd.DataFrame(results_list)
+
+    def color_recommendation(val):
+        if val == 'BUY':
+            return 'background-color: #3cb371; color: white'
+        elif val == 'SELL':
+            return 'background-color: #ff7f7f; color: white'
+        else:
+            return 'background-color: #add8e6; color: white'
+        
+    styled_df = results_df.style.applymap(color_recommendation, subset = ['Recommendation'])
+
+    st.dataframe(styled_df, use_container_width = True)
+
+    st.subheader("Detailed Analysis")
+
+    if st.session_state.analyzed_stocks:
+        tabs = st.tabs(st.session_state.analyzed_stocks)
+
+        for i, ticker in enumerate(st.session_state.analyzed_stocks):
+            with tabs[i]:
+                if ticker in st.session_state.analysis_results:
+                    data = st.session_state.analysis_results[ticker]
+
+                    st.markdown(f"### {data['company']} ({ticker})")
+                    st.markdown(F"**Price:** ${data['price']:.2f} ({data['day_change']})")
+                    st.markdown(f"**Recommenation:** {data['recommendation']}")
+
+                    st.markdown("#### Technical Indicators")
+                    signals = data['signals']
+
+                    cols = st.columns(3)
+
+                    with cols[0]:
+                        rsi_color = "#3cb371" if signals['rsi_oversold'] else ("#ff7f7f" if signals['rsi_overbought'] else "#add8e6")
+                        st.markdown(f"""
+                        <div style = "padding: 10px; border-radius: 5px; background-color: {rsi_color}; color: white;">
+                            <h4 style = "margin:0;">RSI</h4>
+                            <p style = "font-size: 20px; margin: 5px 0;">{st.session_state.agent.market_data[ticker]['rsi']:.1f}</p>
+                        </div>
+                        """, unsafe_allow_html = True)
+
+                    with cols[1]:
+                        macd_color = "#3cb371" if signals['macd_bullish'] else "#ff7f7f"
+                        st.markdown(f"""
+                        <div style = "padding: 10px; border-radius: 5px; background-color: {macd_color}; color: white;">
+                            <h4 style = "margin: 0;">MACD</h4>
+                            <p style = "font-size: 20 px; margin: 5px 0;">{"Bullish" if signals['macd_bullish'] else "Bearish"}</p>
+                        </div>
+                        """, unsafe_allow_html = True)
+                    with cols[2]:
+                        ma_color = "#3cb371" if signals['price_above_sma20'] and signals['price_above_sma50'] else ("#add8e6" if signals['price_above_sma20'] or signals['price_above_sma50'] else "#ff7f7f")
+                        st.markdown(f"""
+                        <div style = "padding: 10 px; border-radius: 5px; background-color: {ma_color}; color: white;">
+                            <h4 style = "margin: 0;">Moving Averages</h4>
+                            <p style = "font-size: 20px; margin: 5px 0;">{"Strong Uptrend" if signals['price_above_sma20'] and signals['price_above_sma50'] else ("Mixed" if signals['price_above_sma20'] or signlas['price_above_sma50'] else "Downtrend")}</p>
+                        </div>
+                        """, unsafe_allow_html = True)
+
+
+                    if ticker in st.session_state.agent.market_data:
+                        hist_data = st.session_state.agent.market_data[ticker]['hist_data']
+                        
+
+    """                    
     def monitor_portfolio(self, portfolio):
         if not portfolio or 'holdings' not in portfolio:
             return {"error": "Invalid portfolio format. Please provide a portfolio with holdings."}
@@ -488,5 +641,4 @@ def run_example(self):
 
 if __name__ == "__main__":
     run_example('self')
-
 """
