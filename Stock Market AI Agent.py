@@ -40,7 +40,7 @@ class StockMarketAIAgent:
                 hist_data['SMA_20'] = hist_data['Close'].rolling(window = 20).mean()
                 hist_data['SMA_50'] = hist_data['Close'].rolling(window = 50).mean()
                 hist_data['RSI'] = self._calculate_rsi(hist_data['Close'], 14)
-                hist_data['MCD'], hist_data['Signal'] = self._calculate_mcd(hist_data['Close'])
+                hist_data['MACD'], hist_data['Signal'] = self._calculate_macd(hist_data['Close'])
                 hist_data['Volatility'] = hist_data['Close'].rolling(window = 20).std()
 
                 latest = hist_data.iloc[-1]
@@ -163,6 +163,7 @@ class StockMarketAIAgent:
                 'price': data['current_price'],
                 'day_change': f"{data['day_change_pct']:.2f}%",
                 'technical_score': tech_score,
+                'momentum_score': momentum_score,
                 'final_score': final_score,
                 'signals': signals,
                 'recommendation': recommendation,
@@ -461,7 +462,7 @@ def run_example(self):
         print(f" Recommendation: {holding['current_recommendation']}")
 
 if __name__ == "__main__":
-    run_example()
+    run_example('self')
 
                 
 
