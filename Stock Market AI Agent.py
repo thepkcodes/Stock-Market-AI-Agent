@@ -348,7 +348,7 @@ st.set_page_config(page_title = "Stock Market AI Agent", page_icon = "📈", lay
 
 if 'agent' not in st.session_state:
     st.session_state.agent = StockMarketAIAgent()
-if 'analyzed_stocks' not in st.session_state = []
+if 'analyzed_stocks' not in st.session_state:
     st.session_state.analyzed_stocks = []
 if 'analysis_results' not in st.session_state:
     st.session_state.analysis_results = {}
@@ -574,7 +574,8 @@ if st.session_state.analysis_results:
                 title = 'Portfolio Allocation',
                 hover_data = ['ticker', 'allocation_percentage', 'current_price']
             )    
-            fig.update_traces(textposition = 'inside', )
+            fig.update_traces(textposition = 'inside', textinfo = 'percent+label')
+            st.plotly_chart(fig, use_container_width = True)
 
     """                    
     def monitor_portfolio(self, portfolio):
