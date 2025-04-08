@@ -374,6 +374,26 @@ risk_profile = st.sidebar.selectbox(
     ["Conservative", "moderate", "aggressive"],
 )
 
+st.sidebar.subheader("Add Stock to Watchlist")
+new_stock = st.sidebar.text_input("Enter Stock Ticker (e.g., AAPL)", "")
+add_stock_button = st.sidebar.button("Add Stock")
+
+if add_stock_button and new_stock:
+    if new_stock not in st.session_state.analyzed_stocks:
+        try:
+            with st.spinner(f"Verifying {new_stock}..."):
+                stock = yf.Ticker(new_stock)
+                info = stock.info
+                if 'symbol' in info:
+                    st.session_state.analyzed_stocks.append(new_stock)
+                    st.sidebar.success(f"Added {new_stock} to watchlist!")
+                else:
+                    st.sidebar.error(f"Could not verify ticker {new_stock}")
+        except Exception as e:
+            st.sidebar.error(f"Error: {str(e)}")
+    else:
+        st.sidebar.info(f"{new_stock} is already in your watchlist")
+
 st.sidebar.subheader("Your Watchlist")
 if st.session_state.analyzed_stocks:
     for i, stock in enumerate(st.session_state.analyzed_stocks):
@@ -511,7 +531,7 @@ if st.session_state.analysis_results:
                         st.markdown(f"""
                         <div style = "padding: 10 px; border-radius: 5px; background-color: {ma_color}; color: white;">
                             <h4 style = "margin: 0;">Moving Averages</h4>
-                            <p style = "font-size: 20px; margin: 5px 0;">{"Strong Uptrend" if signals['price_above_sma20'] and signals['price_above_sma50'] else ("Mixed" if signals['price_above_sma20'] or signlas['price_above_sma50'] else "Downtrend")}</p>
+                            <p style = "font-size: 20px; margin: 5px 0;">{"Strong Uptrend" if signals['price_above_sma20'] and signals['price_above_sma50'] else ("Mixed" if signals['price_above_sma20'] or signals['price_above_sma50'] else "Downtrend")}</p>
                         </div>
                         """, unsafe_allow_html = True)
 
@@ -576,126 +596,3 @@ if st.session_state.analysis_results:
             )    
             fig.update_traces(textposition = 'inside', textinfo = 'percent+label')
             st.plotly_chart(fig, use_container_width = True)
-
-    """                    
-    def monitor_portfolio(self, portfolio):
-        if not portfolio or 'holdings' not in portfolio:
-            return {"error": "Invalid portfolio format. Please provide a portfolio with holdings."}
-        
-        tickers = [item['ticker'] for item in portfolio['holdings']]
-
-        self.get_realtime_data(tickers)
-
-        total_value = 0
-        total_cost = 0
-        holdings_data = []
-
-        for holding in portfolio['holdings']:
-            ticker = holding['ticker']
-            shares = holding['shares']
-            cost_basis = holding['cost_basis']
-
-            if ticker in self.market_data:
-                current_price = self.market_data[ticker]['current_price']
-                current_value = shares * current_price
-                position_change = current_value - (shares * cost_basis)
-                position_change_pct = (position_change / (shares * cost_basis)) * 100
-
-                analysis = self.analyze_stocks()
-                recommendation = "HOLD"
-                if ticker in analysis:
-                    recommendation = analysis[ticker]['recommendation']
-
-                holdings_data.append({
-                    "ticker": ticker,
-                    "company": self.market_data[ticker]['company_name'],
-                    "shares": shares,
-                    "cost_basis": cost_basis,
-                    "current_price": current_price,
-                    "current_value": current_value,
-                    "position_change": position_change_pct,
-                    "day_change_pct": self.market_data[ticker]['day_change_pct'],
-                    "current_recommendation": recommendation
-                })
-
-                total_value += current_value
-                total_cost += (shares * cost_basis)
-
-        overall_change = total_value - total_cost
-        overall_change_pct = (overall_change / total_cost) * 100 if total_cost > 0 else 0
-
-        market_summary = self.get_market_summary()
-
-        return {
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "portfolio_value": total_value,
-            "total_cost": total_cost,
-            "overall_change": overall_change,
-            "overall_change_pct": overall_change_pct,
-            "holdings": sorted(holdings_data, key = lambda x: x['current_value'], reverse = True),
-            "market_context": market_summary.get("market_bias", "Unknown") 
-        }
-    
-def run_example(self):
-    agent = StockMarketAIAgent(api_key = 'PEESFA0M83GR5LC7')
-        
-    stocks = ['AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META', 'TSLA', 'NFLX', 'ORCL', 'NVDA', 'IBM']
-
-    print("1. Fetching real-time market data...")
-    agent.get_realtime_data(stocks)
-
-    print("\n2. Analyzing stocks...")
-    analysis = agent.analyze_stocks(risk_profile='moderate')
-
-    print("\nStock Analysis Results:")
-    for ticker, data in analysis.items():
-        print(f"\n{data['company']} ({ticker}):")
-        print(f" Current Price: ${data['price']: 2f} ({data['day_change']})")
-        print(f" Recommendation: {data['recommendation']}")
-        print(f" Analysis: {data['analysis']}")
-
-    print("\n3. Generating market summary...")
-    summary = agent.get_market_summary()
-    print(f"\nMarket Bias: {summary['market_bias']}")
-    print(f"BUY Recommendations: {summary['buy_percentage']:.1f}%")
-    print(f"Sell Recommendations: {summary['sell_percentage']:.1f}%")
-
-    print("\nTop Performers:")
-    for stock in summary['top_performers']:
-        print(f" {stock['company']} ({stock['ticker']}): Score {stock['score']:.2f}")
-
-    print("\n4. Suggesting portfolio allocation for $10,000...")
-    portfolio = agent.suggest_portfolio(10000, risk_profile='moderate')
-
-    if 'allocation' in portfolio:
-        print("\nSuggested Portfolio:")
-        for item in portfolio['allocation']:
-            print(f" {item['company']} ({item['ticker']}): ${item['amount']:.2f} ({item['allocation_percentage']:.1f}%)")
-
-
-    sample_portfolio = {
-        "holdings": [
-            {"ticker": "AAPL", "shares": 10, "cost_basis": 150.0},
-            {"ticker": "MSFT", "shares": 5, "cost_basis": 250.0},
-            {"ticker": "AMZN", "shares": 2, "cost_basis": 3000.0}
-        ]
-    }
-
-    print("\n5. Monitoring existing portfolio...")
-    portfolio_status = agent.monitor_portfolio(sample_portfolio)
-
-    print("\nPortfolio Performance:")
-    print(f"Total Value: ${portfolio_status['portfolio_value']:.2f}")
-    print(f"Total Cost: ${portfolio_status['total_cost']:.2f}")
-    print(f"Overall Change: ${portfolio_status['overall_change']:.2f} ({portfolio_status['overall_change_pct']:.2f}%)")
-
-    print("\nHoldings Status:")
-    for holding in portfolio_status['holdings']:
-        print(f" {holding['company']} ({holding['ticker']}): {holding['shares']} shares")
-        print(f" Current Value: ${holding['current_value']:.2f} (${holding['current_price']:.2f} per share)")
-        print(f" Position Change: ${holding['position_change']:.2f} ({holding['current_price']:.2f} per share)")
-        print(f" Recommendation: {holding['current_recommendation']}")
-
-if __name__ == "__main__":
-    run_example('self')
-"""
