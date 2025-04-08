@@ -519,6 +519,62 @@ if st.session_state.analysis_results:
                     if ticker in st.session_state.agent.market_data:
                         hist_data = st.session_state.agent.market_data[ticker]['hist_data']
                         
+                        fig = go.Figure()
+
+                        fig.add_trace(go.Candlestick(
+                            x = hist_data.index,
+                            open = hist_data['Open'],
+                            high = hist_data['High'],
+                            low = hist_data['Low'],
+                            close = hist_data['Close'],
+                            name = 'Price'
+                        ))
+
+                        fig.add_trace(go.Scatter(
+                            x = hist_data.index,
+                            y = hist_data['SMA_20'],
+                            mode = 'lines',
+                            name = '20-day SMA',
+                            line = dict(color = 'blue', width = 1)
+                        ))
+
+                        fig.add_trace(go.Scatter(
+                            x = hist_data.index,
+                            y = hist_data['SMA_50'],
+                            mode = 'lines',
+                            name = '50-day SMA',
+                            line = dict(color = 'orange', width = 1)
+                        ))
+
+                        fig.update_layout(
+                            title = f"{ticker} Price Chart",
+                            xaxis_title = 'Date',
+                            yaxis_title = 'Price ($)',
+                            height = 500
+                        )
+
+                        st.plotly_chart(fig, use_container_width = True)
+                else:
+                    st.warning(f"No analysis data available for {ticker}")
+
+    if st.session_state.portfolio_suggestion and 'allocation' in st.session_state.portfolio_suggestion:
+        st.header("Portfolio Recommendation")
+
+        portfolio = st.session_state.portfolio_suggestion
+
+        st.subheader(f"Suggested Portfolio (${portfolio['total_budget']:,.2f} - {portfolio['risk_profile'].title()} Risk)")
+
+        if portfolio['allocation']:
+            allocation_df = pd.DataFrame(portfolio['allocation'])
+
+            fig = px.pie(
+                allocation_df,
+                values = 'amount',
+                names = 'company',
+                title = 'Portfolio Allocation',
+                hover_data = ['ticker', 'allocation_percentage', 'current_price']
+            )    
+            fig.update_traces(textposition = 'inside', )
 
     """                    
     def monitor_portfolio(self, portfolio):
