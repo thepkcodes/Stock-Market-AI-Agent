@@ -401,7 +401,7 @@ if st.session_state.analyzed_stocks:
         cols[0].write(stock)
         if cols[1].button("🗑️", key = f"delete_{i}"):
             st.session_state.analyzed_stocks.remove(stock)
-            st.experimental_rerun()
+            st.rerun()
 else:
     st.sidebar.write("No stocks in watchlist yet.")
 
