@@ -5,7 +5,14 @@ The Stock Market AI Agent is a Streamlit-based web application designed to provi
 ## Table of Content
 
 - [Features](features)
-
+- [Prereuisites](prereuisites)
+- [Installation](installation)
+- [Configuration](configuration)
+- [Running the Application](running-the-application)
+- [File Structure](file-structure)
+- [License](license)
+- [Contributing](contributing)
+- [Acknowledgement](acknowledgment)
 
 ## Features
 
@@ -13,6 +20,10 @@ The Stock Market AI Agent is a Streamlit-based web application designed to provi
 - AI-Driven Predictions: Uses intelligent algorithms to forecast and recommend stock movements.
 - Interactive Interface: Built with Streamlit for a seamless and user-friendly experience.
 - Secure API Management: Utilizes Streamlit's secrets managements to securely handle API keys.
+
+## Demo Link
+
+[Demo Video](https://www.linkedin.com/posts/punit-kumar-cu2025_stockmarket-ai-aiagent-activity-7315550146044276736-QfY9?utm_source=share&utm_medium=member_desktop&rcm=ACoAADbJLEcBOlM7rxjDBx8-OlgRsoNklGaxyBc)
 
 ## Prerequisites
 
@@ -45,11 +56,11 @@ Follow these steps to set up the project locally:
 The project uses a secret management system provided by Streamlit. To securely handle API keys and the other sensitive configuration:
 
 #### 1. .streamlit Folder:
-- The .streamlit directory holds configuration files including secrets.toml file.
+- The ```.streamlit ``` directory holds configuration files including ```secrets.toml``` file.
 - This file contain all secret parameters such as API keys.
 
 #### 2. Setting Up secrets.toml:
-- Navigate to the .streamlit folder and create or update the secrets.toml file:
+- Navigate to the ```.streamlit``` folder and create or update the secrets.toml file:
 - Example Configuration:
 ``` toml
   [api]
@@ -57,5 +68,42 @@ The project uses a secret management system provided by Streamlit. To securely h
 ```
 
 #### 3. Security:
-- The .gitignore file is set up to ensure that sensitive files (like secrest.toml) are not pushed to the repository.
+- The ```.gitignore``` file is set up to ensure that sensitive files (like ```secrest.toml```) are not pushed to the repository.
 - Do not share your API key or other private information publicly.
+
+## Running the Application
+  
+After installation and configuration, start the Streamlit web app with the following command:
+
+```bash
+streamlit run stock_market_ai_agent.py
+```
+
+This command will launch the application in your default web browser. Explore the interactive features and witness the AI agent in action.
+
+## File Structure
+
+```bash
+.gitignore               # Specifies files and directories to be ignored by Git
+LICENSE                  # The project's license information
+README.MD                # This Readme file
+stock_market_ai_agent    # Main Python code for the AI agent application
+```
+
+## License
+
+This project is licensed under [MIT License](mit-license). Refer to the LICENSE file for detailed licensing information.
+
+## Contributing
+
+Contributions, feature requests, and bug reports are highly welcome! Feel free to:
+
+- Open an issue for improvements or bugs.
+- Submit pull requests with enhancements.
+- Discuss ideas by [opening an issue](opening-an-issue).
+
+## Acknowledgement
+
+- Streamlit: For its simplicity and effectiveness in building interactive web applications.
+- Open Source Community: For providing extensive libraries and resources to build intelligent systems.
+- Financial Data Providers: For supplying reliable market data.
