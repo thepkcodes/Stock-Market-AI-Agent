@@ -21,9 +21,9 @@ The Stock Market AI Agent is a Streamlit-based web application designed to provi
 - Interactive Interface: Built with Streamlit for a seamless and user-friendly experience.
 - Secure API Management: Utilizes Streamlit's secrets managements to securely handle API keys.
 
-## Demo Link
+## App Link
 
-[Demo Video](https://www.linkedin.com/posts/punit-kumar-cu2025_stockmarket-ai-aiagent-activity-7315550146044276736-QfY9?utm_source=share&utm_medium=member_desktop&rcm=ACoAADbJLEcBOlM7rxjDBx8-OlgRsoNklGaxyBc)
+[Check Here](https://stock-market-ai-agent.streamlit.app/)
 
 ## Prerequisites
 
